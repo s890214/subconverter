@@ -31,8 +31,8 @@ jobs:
       - name: Generate version tag
         id: version
         run: |
-          # 生成版本号：年月日.时分秒
-          VERSION=$(date +'%Y%m%d.%H%M%S')
+          # 生成版本号（北京时间 UTC+8）
+          VERSION=$(TZ=Asia/Shanghai date +'%Y%m%d.%H%M%S')
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Generated version: $VERSION"
