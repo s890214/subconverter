@@ -1295,6 +1295,15 @@ void explodeClash(Node yamlnode, std::vector<Proxy> &nodes) {
     Node singleproxy;
     uint32_t index = nodes.size();
     const std::string section = yamlnode["proxies"].IsDefined() ? "proxies" : "Proxy";
+    
+    // 提取原始订阅中的 DNS 配置（如果有的话）
+    std::string dnsYaml;
+    if (yamlnode["dns"].IsDefined()) {
+        std::ostringstream oss;
+        oss << yamlnode["dns"];
+        dnsYaml = oss.str();
+    }
+    
     for (uint32_t i = 0; i < yamlnode[section].size(); i++) {
         std::string proxytype, ps, server, port, cipher, group, password = "", ports, tempPassword; //common
         std::string type = "none", id, aid = "0", net = "tcp", path, host, edge, tls, sni; //vmess
@@ -1324,6 +1333,9 @@ void explodeClash(Node yamlnode, std::vector<Proxy> &nodes) {
             oss << singleproxy;
             node.OriginalNodeYaml = oss.str();
         }
+        
+        // 保存原始订阅中的 DNS 配置
+        node.OriginalDnsYaml = dnsYaml;
         
         // 存储原始订阅中的所有字段
         for (auto it = singleproxy.begin(); it != singleproxy.end(); ++it) {

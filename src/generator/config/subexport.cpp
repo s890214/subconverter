@@ -920,12 +920,10 @@ std::string proxyToClash(std::vector<Proxy> &nodes, const std::string &base_conf
     proxyToClash(nodes, yamlnode, extra_proxy_group, clashR, ext);
 
     // 保留原始订阅中的 DNS 配置
-    if (ext.keep_original_dns && !nodes.empty() && !nodes[0].OriginalNodeYaml.empty()) {
+    if (ext.keep_original_dns && !nodes.empty() && !nodes[0].OriginalDnsYaml.empty()) {
         try {
-            YAML::Node original = YAML::Load(nodes[0].OriginalNodeYaml);
-            if (original["dns"].IsDefined()) {
-                yamlnode["dns"] = original["dns"];
-            }
+            YAML::Node dnsNode = YAML::Load(nodes[0].OriginalDnsYaml);
+            yamlnode["dns"] = dnsNode;
         } catch (...) {
             // DNS 保留失败，不影响主流程
         }

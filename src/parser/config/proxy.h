@@ -154,6 +154,9 @@ struct Proxy {
     
     // 存储原始 YAML 节点的序列化字符串，用于保留原始字段
     std::string OriginalNodeYaml;
+    
+    // 存储原始订阅中的 DNS 配置（顶层 dns 节点）
+    std::string OriginalDnsYaml;
 };
 
 #define SS_DEFAULT_GROUP "SSProvider"
