@@ -1296,18 +1296,12 @@ void explodeClash(Node yamlnode, std::vector<Proxy> &nodes, const std::string& d
     uint32_t index = nodes.size();
     const std::string section = yamlnode["proxies"].IsDefined() ? "proxies" : "Proxy";
     
-    // 提取原始订阅中的 DNS 配置（如果有的话）
-    std::string localDnsYaml = dnsYaml;  // 使用传入的 dnsYaml
-    if (localDnsYaml.empty() && yamlnode["dns"].IsDefined()) {
-        std::ostringstream oss;
-        oss << yamlnode["dns"];
-        localDnsYaml = oss.str();
-        writeLog(0, "[DEBUG] Found DNS in yamlnode, length: " + std::to_string(localDnsYaml.length()), LOG_LEVEL_INFO);
-        writeLog(0, "[DEBUG] DNS content: " + localDnsYaml.substr(0, 200), LOG_LEVEL_INFO);
-    } else if (!localDnsYaml.empty()) {
+    // 使用传入的 dnsYaml（从 explodeSub 传递的完整订阅中的 DNS）
+    std::string localDnsYaml = dnsYaml;
+    if (!localDnsYaml.empty()) {
         writeLog(0, "[DEBUG] Using passed DNS from explodeSub, length: " + std::to_string(localDnsYaml.length()), LOG_LEVEL_INFO);
     } else {
-        writeLog(0, "[DEBUG] No DNS found", LOG_LEVEL_INFO);
+        writeLog(0, "[DEBUG] No DNS passed from explodeSub", LOG_LEVEL_INFO);
     }
     
     // 打印整个原始订阅的内容（前1000字符）
