@@ -604,6 +604,9 @@ proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGroupCo
                 if (!udp.is_undef()) {
                     singleproxy["udp"] = udp.get();
                 }
+                if (!tfo.is_undef()) {
+                    singleproxy["tfo"] = tfo.get();
+                }
                 if (!x.SNI.empty()) {
                     singleproxy["sni"] = x.SNI;
                 }
@@ -614,6 +617,10 @@ proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGroupCo
                         singleproxy["alpn"].push_back(item);
                     }
                 }
+                // 导出 idle-session 相关字段
+                singleproxy["idle-session-check-interval"] = x.IdleSessionCheckInterval;
+                singleproxy["idle-session-timeout"] = x.IdleSessionTimeout;
+                singleproxy["min-idle-session"] = x.MinIdleSession;
                 break;
             case ProxyType::Mieru:
                 singleproxy["type"] = "mieru";
@@ -749,6 +756,32 @@ proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGroupCo
             singleproxy.SetStyle(YAML::EmitterStyle::Block);
         else
             singleproxy.SetStyle(YAML::EmitterStyle::Flow);
+        
+        // 智能合并：保留原始订阅中的字段，但 name 使用 subconverter 生成的
+        // 策略：以原始节点为基础，只替换 name 为 subconverter 生成的名称
+        if (ext.keep_original_fields && !x.OriginalNodeYaml.empty()) {
+            try {
+                YAML::Node merged = YAML::Load(x.OriginalNodeYaml);
+                // 只替换 name 为 subconverter 生成的（去除 emoji 后的）
+                merged["name"] = x.Remark;
+                
+                // 确保 server 和 port 与 subconverter 一致（用于匹配）
+                merged["server"] = x.Hostname;
+                merged["port"] = x.Port;
+                
+                singleproxy = merged;
+            } catch (...) {
+                // 如果解析失败，继续使用 subconverter 生成的字段
+            }
+        }
+        
+        // 合并原始订阅中的额外字段（如果 subexport 没有导出该字段）
+        for (const auto &pair : x.ExtraOptions) {
+            if (!singleproxy[pair.first]) {
+                singleproxy[pair.first] = pair.second;
+            }
+        }
+        
         proxies.push_back(singleproxy);
         remarks_list.emplace_back(x.Remark);
         nodelist.emplace_back(x);
@@ -885,6 +918,18 @@ std::string proxyToClash(std::vector<Proxy> &nodes, const std::string &base_conf
     }
 
     proxyToClash(nodes, yamlnode, extra_proxy_group, clashR, ext);
+
+    // 保留原始订阅中的 DNS 配置
+    if (ext.keep_original_dns && !nodes.empty() && !nodes[0].OriginalNodeYaml.empty()) {
+        try {
+            YAML::Node original = YAML::Load(nodes[0].OriginalNodeYaml);
+            if (original["dns"].IsDefined()) {
+                yamlnode["dns"] = original["dns"];
+            }
+        } catch (...) {
+            // DNS 保留失败，不影响主流程
+        }
+    }
 
     if (ext.nodelist)
         return formatterShortId(YAML::Dump(yamlnode));

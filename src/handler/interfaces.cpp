@@ -354,6 +354,8 @@ std::string subconverter(RESPONSE_CALLBACK_ARGS) {
     tribool argPrependInsert = getUrlArg(argument, "prepend"), argGenClassicalRuleProvider = getUrlArg(argument,
         "classic"), argTLS13 = getUrlArg(
         argument, "tls13");
+    tribool argKeepOriginalFields = getUrlArg(argument, "keep_original_fields");
+    tribool argKeepOriginalDns = getUrlArg(argument, "keep_original_dns");
 
     std::string base_content, output_content;
     ProxyGroupConfigs lCustomProxyGroups = global.customProxyGroups;
@@ -450,6 +452,8 @@ std::string subconverter(RESPONSE_CALLBACK_ARGS) {
     else
         ext.clash_script = false;
 
+    ext.keep_original_fields = argKeepOriginalFields.get(true);  // 默认 true
+    ext.keep_original_dns = argKeepOriginalDns.get(true);        // 默认 true
     ext.nodelist = argGenNodeList;
     ext.surge_ssr_path = global.surgeSSRPath;
     ext.quanx_dev_id = !argDeviceID.empty() ? argDeviceID : global.quanXDevID;

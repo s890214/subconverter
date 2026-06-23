@@ -150,6 +150,10 @@ struct Proxy {
     String Multiplexing;
     tribool V2rayHttpUpgrade;
     StringMap XHTTPOptions;
+    StringMap ExtraOptions;  // 存储原始订阅中的额外字段
+    
+    // 存储原始 YAML 节点的序列化字符串，用于保留原始字段
+    std::string OriginalNodeYaml;
 };
 
 #define SS_DEFAULT_GROUP "SSProvider"

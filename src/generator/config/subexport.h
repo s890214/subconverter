@@ -38,6 +38,8 @@ struct extra_settings
     tribool skip_cert_verify = tribool();
     tribool tls13 = tribool();
     bool clash_classical_ruleset = false;
+    bool keep_original_fields = false;  // 保留原始订阅中的字段（除 name 外）
+    bool keep_original_dns = false;     // 保留原始订阅中的 DNS 配置
     std::string sort_script;
     std::string clash_proxies_style = "flow";
     std::string clash_proxy_groups_style = "flow";

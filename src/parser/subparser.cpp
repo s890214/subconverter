@@ -1317,6 +1317,62 @@ void explodeClash(Node yamlnode, std::vector<Proxy> &nodes) {
         std::vector<std::string> alpnList;
         Proxy node;
         singleproxy = yamlnode[section][i];
+        
+        // 保存原始 YAML 节点的序列化字符串，用于后续保留原始字段
+        {
+            std::ostringstream oss;
+            oss << singleproxy;
+            node.OriginalNodeYaml = oss.str();
+        }
+        
+        // 存储原始订阅中的所有字段
+        for (auto it = singleproxy.begin(); it != singleproxy.end(); ++it) {
+            std::string key = it->first.as<std::string>();
+            std::string value;
+            if (it->second.IsScalar()) {
+                value = it->second.as<std::string>();
+            } else if (it->second.IsSequence()) {
+                YAML::Node temp;
+                temp[key] = it->second;
+                std::ostringstream oss;
+                oss << temp;
+                value = oss.str();
+                // 去掉 YAML 格式的前缀
+                size_t pos = value.find(key + ":");
+                if (pos != std::string::npos) {
+                    value = value.substr(pos + key.length() + 1);
+                    // 去掉开头的空格和换行
+                    while (!value.empty() && (value[0] == ' ' || value[0] == '\n')) {
+                        value.erase(0, 1);
+                    }
+                    // 去掉末尾的换行
+                    while (!value.empty() && value.back() == '\n') {
+                        value.pop_back();
+                    }
+                }
+            } else if (it->second.IsMap()) {
+                YAML::Node temp;
+                temp[key] = it->second;
+                std::ostringstream oss;
+                oss << temp;
+                value = oss.str();
+                // 去掉 YAML 格式的前缀
+                size_t pos = value.find(key + ":");
+                if (pos != std::string::npos) {
+                    value = value.substr(pos + key.length() + 1);
+                    // 去掉开头的空格和换行
+                    while (!value.empty() && (value[0] == ' ' || value[0] == '\n')) {
+                        value.erase(0, 1);
+                    }
+                    // 去掉末尾的换行
+                    while (!value.empty() && value.back() == '\n') {
+                        value.pop_back();
+                    }
+                }
+            }
+            node.ExtraOptions[key] = value;
+        }
+        
         singleproxy["type"] >>= proxytype;
         singleproxy["name"] >>= ps;
         singleproxy["server"] >>= server;
