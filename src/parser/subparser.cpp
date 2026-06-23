@@ -1302,6 +1302,18 @@ void explodeClash(Node yamlnode, std::vector<Proxy> &nodes) {
         std::ostringstream oss;
         oss << yamlnode["dns"];
         dnsYaml = oss.str();
+        writeLog(0, "[DEBUG] Found DNS in original subscription, length: " + std::to_string(dnsYaml.length()), LOG_LEVEL_INFO);
+        writeLog(0, "[DEBUG] DNS content: " + dnsYaml.substr(0, 200), LOG_LEVEL_INFO);
+    } else {
+        writeLog(0, "[DEBUG] No DNS found in original subscription", LOG_LEVEL_INFO);
+    }
+    
+    // 打印整个原始订阅的内容（前1000字符）
+    {
+        std::ostringstream oss;
+        oss << yamlnode;
+        std::string fullYaml = oss.str();
+        writeLog(0, "[DEBUG] Original subscription content (first 1000 chars): " + fullYaml.substr(0, 1000), LOG_LEVEL_INFO);
     }
     
     for (uint32_t i = 0; i < yamlnode[section].size(); i++) {

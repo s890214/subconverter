@@ -920,12 +920,19 @@ std::string proxyToClash(std::vector<Proxy> &nodes, const std::string &base_conf
     proxyToClash(nodes, yamlnode, extra_proxy_group, clashR, ext);
 
     // 保留原始订阅中的 DNS 配置
+    writeLog(0, "[DEBUG] keep_original_dns=" + std::string(ext.keep_original_dns ? "true" : "false") + ", nodes.size()=" + std::to_string(nodes.size()), LOG_LEVEL_INFO);
+    if (!nodes.empty()) {
+        writeLog(0, "[DEBUG] nodes[0].OriginalDnsYaml.length()=" + std::to_string(nodes[0].OriginalDnsYaml.length()), LOG_LEVEL_INFO);
+        writeLog(0, "[DEBUG] nodes[0].OriginalDnsYaml=" + nodes[0].OriginalDnsYaml.substr(0, 200), LOG_LEVEL_INFO);
+    }
     if (ext.keep_original_dns && !nodes.empty() && !nodes[0].OriginalDnsYaml.empty()) {
         try {
             YAML::Node dnsNode = YAML::Load(nodes[0].OriginalDnsYaml);
             yamlnode["dns"] = dnsNode;
+            writeLog(0, "[DEBUG] DNS config restored successfully", LOG_LEVEL_INFO);
         } catch (...) {
             // DNS 保留失败，不影响主流程
+            writeLog(0, "[DEBUG] DNS restore failed", LOG_LEVEL_INFO);
         }
     }
 
