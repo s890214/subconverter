@@ -1291,21 +1291,23 @@ void explodeNetch(std::string netch, Proxy &node) {
     }
 }
 
-void explodeClash(Node yamlnode, std::vector<Proxy> &nodes) {
+void explodeClash(Node yamlnode, std::vector<Proxy> &nodes, const std::string& dnsYaml) {
     Node singleproxy;
     uint32_t index = nodes.size();
     const std::string section = yamlnode["proxies"].IsDefined() ? "proxies" : "Proxy";
     
     // 提取原始订阅中的 DNS 配置（如果有的话）
-    std::string dnsYaml;
-    if (yamlnode["dns"].IsDefined()) {
+    std::string localDnsYaml = dnsYaml;  // 使用传入的 dnsYaml
+    if (localDnsYaml.empty() && yamlnode["dns"].IsDefined()) {
         std::ostringstream oss;
         oss << yamlnode["dns"];
-        dnsYaml = oss.str();
-        writeLog(0, "[DEBUG] Found DNS in original subscription, length: " + std::to_string(dnsYaml.length()), LOG_LEVEL_INFO);
-        writeLog(0, "[DEBUG] DNS content: " + dnsYaml.substr(0, 200), LOG_LEVEL_INFO);
+        localDnsYaml = oss.str();
+        writeLog(0, "[DEBUG] Found DNS in yamlnode, length: " + std::to_string(localDnsYaml.length()), LOG_LEVEL_INFO);
+        writeLog(0, "[DEBUG] DNS content: " + localDnsYaml.substr(0, 200), LOG_LEVEL_INFO);
+    } else if (!localDnsYaml.empty()) {
+        writeLog(0, "[DEBUG] Using passed DNS from explodeSub, length: " + std::to_string(localDnsYaml.length()), LOG_LEVEL_INFO);
     } else {
-        writeLog(0, "[DEBUG] No DNS found in original subscription", LOG_LEVEL_INFO);
+        writeLog(0, "[DEBUG] No DNS found", LOG_LEVEL_INFO);
     }
     
     // 打印整个原始订阅的内容（前1000字符）
@@ -1347,7 +1349,7 @@ void explodeClash(Node yamlnode, std::vector<Proxy> &nodes) {
         }
         
         // 保存原始订阅中的 DNS 配置
-        node.OriginalDnsYaml = dnsYaml;
+        node.OriginalDnsYaml = localDnsYaml;
         
         // 存储原始订阅中的所有字段
         for (auto it = singleproxy.begin(); it != singleproxy.end(); ++it) {
@@ -3523,10 +3525,22 @@ void explodeSub(std::string sub, std::vector<Proxy> &nodes) {
     //try to parse as clash configuration
     try {
         if (!processed && regFind(sub, "\"?(Proxy|proxies)\"?:")) {
+            // 先解析完整的订阅内容，保留 DNS
+            Node fullYamlnode = Load(sub);
+            
+            // 提取 DNS 配置
+            std::string dnsYaml;
+            if (fullYamlnode["dns"].IsDefined()) {
+                std::ostringstream oss;
+                oss << fullYamlnode["dns"];
+                dnsYaml = oss.str();
+                writeLog(0, "[DEBUG] explodeSub: Found DNS in full subscription, length: " + std::to_string(dnsYaml.length()), LOG_LEVEL_INFO);
+            }
+            
             regGetMatch(sub, R"(^(?:Proxy|proxies):$\s(?:(?:^ +?.*$| *?-.*$|)\s?)+)", 1, &sub);
             Node yamlnode = Load(sub);
             if (yamlnode.size() && (yamlnode["Proxy"].IsDefined() || yamlnode["proxies"].IsDefined())) {
-                explodeClash(yamlnode, nodes);
+                explodeClash(yamlnode, nodes, dnsYaml);
                 processed = true;
             }
         }
