@@ -10,6 +10,7 @@
 #include "utils/string_hash.h"
 #include "utils/urlencode.h"
 #include "utils/yamlcpp_extra.h"
+#include "utils/extra_options.h"
 #include "config/proxy.h"
 #include "subparser.h"
 #include "utils/logger.h"
@@ -1297,22 +1298,8 @@ void explodeClash(Node yamlnode, std::vector<Proxy> &nodes, const std::string& d
     uint32_t index = nodes.size();
     const std::string section = yamlnode["proxies"].IsDefined() ? "proxies" : "Proxy";
     
-    // 使用传入的 dnsYaml（从 explodeSub 传递的完整订阅中的 DNS）
     std::string localDnsYaml = dnsYaml;
-    if (!localDnsYaml.empty()) {
-        writeLog(0, "[DEBUG] Using passed DNS from explodeSub, length: " + std::to_string(localDnsYaml.length()), LOG_LEVEL_INFO);
-    } else {
-        writeLog(0, "[DEBUG] No DNS passed from explodeSub", LOG_LEVEL_INFO);
-    }
-    
-    // 打印整个原始订阅的内容（前1000字符）
-    {
-        std::ostringstream oss;
-        oss << yamlnode;
-        std::string fullYaml = oss.str();
-        writeLog(0, "[DEBUG] Original subscription content (first 1000 chars): " + fullYaml.substr(0, 1000), LOG_LEVEL_INFO);
-    }
-    
+
     for (uint32_t i = 0; i < yamlnode[section].size(); i++) {
         std::string proxytype, ps, server, port, cipher, group, password = "", ports, tempPassword; //common
         std::string type = "none", id, aid = "0", net = "tcp", path, host, edge, tls, sni; //vmess
@@ -1343,56 +1330,8 @@ void explodeClash(Node yamlnode, std::vector<Proxy> &nodes, const std::string& d
             node.OriginalNodeYaml = oss.str();
         }
         
-        // 保存原始订阅中的 DNS 配置
         node.OriginalDnsYaml = localDnsYaml;
-        
-        // 存储原始订阅中的所有字段
-        for (auto it = singleproxy.begin(); it != singleproxy.end(); ++it) {
-            std::string key = it->first.as<std::string>();
-            std::string value;
-            if (it->second.IsScalar()) {
-                value = it->second.as<std::string>();
-            } else if (it->second.IsSequence()) {
-                YAML::Node temp;
-                temp[key] = it->second;
-                std::ostringstream oss;
-                oss << temp;
-                value = oss.str();
-                // 去掉 YAML 格式的前缀
-                size_t pos = value.find(key + ":");
-                if (pos != std::string::npos) {
-                    value = value.substr(pos + key.length() + 1);
-                    // 去掉开头的空格和换行
-                    while (!value.empty() && (value[0] == ' ' || value[0] == '\n')) {
-                        value.erase(0, 1);
-                    }
-                    // 去掉末尾的换行
-                    while (!value.empty() && value.back() == '\n') {
-                        value.pop_back();
-                    }
-                }
-            } else if (it->second.IsMap()) {
-                YAML::Node temp;
-                temp[key] = it->second;
-                std::ostringstream oss;
-                oss << temp;
-                value = oss.str();
-                // 去掉 YAML 格式的前缀
-                size_t pos = value.find(key + ":");
-                if (pos != std::string::npos) {
-                    value = value.substr(pos + key.length() + 1);
-                    // 去掉开头的空格和换行
-                    while (!value.empty() && (value[0] == ' ' || value[0] == '\n')) {
-                        value.erase(0, 1);
-                    }
-                    // 去掉末尾的换行
-                    while (!value.empty() && value.back() == '\n') {
-                        value.pop_back();
-                    }
-                }
-            }
-            node.ExtraOptions[key] = value;
-        }
+        collectScalarExtraOptions(singleproxy, node.ExtraOptions);
         
         singleproxy["type"] >>= proxytype;
         singleproxy["name"] >>= ps;
@@ -3541,7 +3480,6 @@ void explodeSub(std::string sub, std::vector<Proxy> &nodes) {
                 std::ostringstream oss;
                 oss << fullYamlnode["dns"];
                 dnsYaml = oss.str();
-                writeLog(0, "[DEBUG] explodeSub: Found DNS in full subscription, length: " + std::to_string(dnsYaml.length()), LOG_LEVEL_INFO);
             }
             
             regGetMatch(sub, R"(^(?:Proxy|proxies):$\s(?:(?:^ +?.*$| *?-.*$|)\s?)+)", 1, &sub);

@@ -58,6 +58,8 @@ ADD_EXECUTABLE(${BUILD_TARGET_NAME}
     src/utils/logger.cpp
     src/utils/md5/md5.cpp
     src/utils/network.cpp
+    src/utils/original_dns.cpp
+    src/utils/extra_options.cpp
     src/utils/regexp.cpp
     src/utils/ruleset_format.cpp
     src/utils/string.cpp
