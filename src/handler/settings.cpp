@@ -7,6 +7,7 @@
 #include "server/webserver.h"
 #include "utils/logger.h"
 #include "utils/network.h"
+#include "utils/ruleset_format.h"
 #include "interfaces.h"
 #include "multithread.h"
 #include "settings.h"
@@ -273,7 +274,7 @@ void refreshRulesets(RulesetConfigs &ruleset_list, std::vector<RulesetContent> &
                 type = iter->second;
             }
             writeLog(0, "Updating ruleset url '" + rule_url + "' with group '" + rule_group + "'.", LOG_LEVEL_INFO);
-            rc = {rule_group, rule_url, rule_url_typed, x.Format, type, fetchFileAsync(rule_url, proxy, global.cacheRuleset, true, global.asyncFetchRuleset), x.Interval};
+            rc = {rule_group, rule_url, rule_url_typed, resolveRulesetFormat(type, rule_url, x.Format), type, fetchFileAsync(rule_url, proxy, global.cacheRuleset, true, global.asyncFetchRuleset), x.Interval};
         }
         ruleset_content_array.emplace_back(std::move(rc));
     }

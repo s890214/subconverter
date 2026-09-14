@@ -59,6 +59,7 @@ ADD_EXECUTABLE(${BUILD_TARGET_NAME}
     src/utils/md5/md5.cpp
     src/utils/network.cpp
     src/utils/regexp.cpp
+    src/utils/ruleset_format.cpp
     src/utils/string.cpp
     src/utils/system.cpp
     src/utils/urlencode.cpp)
