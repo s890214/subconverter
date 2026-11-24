@@ -20,6 +20,7 @@
 #include "utils/stl_extra.h"
 #include "utils/urlencode.h"
 #include "utils/yamlcpp_extra.h"
+#include "utils/extra_options.h"
 #include "utils/original_dns.h"
 #include "nodemanip.h"
 #include "ruleconvert.h"
@@ -766,6 +767,9 @@ proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGroupCo
         if (ext.keep_original_fields && !x.OriginalNodeYaml.empty()) {
             try {
                 YAML::Node merged = YAML::Load(x.OriginalNodeYaml);
+                // 原始订阅里的 null 字段（如 hysteria2 的 up: null / down: ~）
+                // 不是有效配置，写回会导致 Clash 解析异常，合并前先剔除
+                removeNullFields(merged);
                 // 只替换 name 为 subconverter 生成的（去除 emoji 后的）
                 merged["name"] = x.Remark;
                 

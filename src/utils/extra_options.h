@@ -11,4 +11,9 @@
 void collectScalarExtraOptions(const YAML::Node &node,
                                std::map<std::string, std::string> &out);
 
+/// Drop mapping keys whose value is YAML null (e.g. `up: null`, `down: ~`
+/// found in airport hysteria2 entries). Null values are not valid proxy
+/// settings and break Clash parsing when written back verbatim.
+void removeNullFields(YAML::Node &node);
+
 #endif // EXTRA_OPTIONS_H_INCLUDED

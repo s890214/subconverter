@@ -59,6 +59,26 @@ int main()
     expect_true("no-ws-opts", extra.find("ws-opts") == extra.end());
     expect_true("no-alpn", extra.find("alpn") == extra.end());
 
+    YAML::Node hy2 = YAML::Load(
+        "name: hy2-null\n"
+        "type: hysteria2\n"
+        "server: 1.2.3.4\n"
+        "port: 443\n"
+        "up: null\n"
+        "down: ~\n"
+        "sni: example.com\n"
+        "udp: true\n");
+    removeNullFields(hy2);
+    expect_true("null-up-removed", !hy2["up"].IsDefined());
+    expect_true("null-down-removed", !hy2["down"].IsDefined());
+    expect_eq("keep-sni", hy2["sni"].as<std::string>(), "example.com");
+    expect_eq("keep-udp", hy2["udp"].as<std::string>(), "true");
+    expect_eq("keep-name-hy2", hy2["name"].as<std::string>(), "hy2-null");
+
+    YAML::Node list = YAML::Load("- a\n- b\n");
+    removeNullFields(list);
+    expect_true("non-map-untouched", list.size() == 2);
+
     if (failures)
     {
         std::printf("%d failed\n", failures);
